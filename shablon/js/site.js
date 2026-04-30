@@ -142,6 +142,43 @@ function site_menu_init(){
     site_menu_refresh();
 }
 
+function site_news_load($box){
+    if (!$box || $box.length < 1){
+        return false;
+    }
+
+    var cur_key = parseInt($box.attr('data-cur-key') || '0', 10);
+    if (isNaN(cur_key) || cur_key <= 0){
+        $box.html('<div class="mod-news__empty">Не удалось определить страницу новостей.</div>');
+        return false;
+    }
+
+    $.ajax({
+        type:'POST',
+        url:'/?com=ajax',
+        data:{ajax:'news',cur_key:cur_key},
+        cache:false,
+        success:function(ans){
+            var data = ans;
+            if (typeof data === 'string'){
+                try{ data = JSON.parse(data); }catch(e){ data = null; }
+            }
+
+            if (!data || data.status !== 'ok'){
+                $box.html('<div class="mod-news__empty">Ошибка загрузки новостей.</div>');
+                return;
+            }
+
+            $box.html(data.html || '<div class="mod-news__empty">Пока нет новостей.</div>');
+        },
+        error:function(){
+            $box.html('<div class="mod-news__empty">Ошибка загрузки новостей.</div>');
+        }
+    });
+
+    return true;
+}
+
 //strTrim вместо $.trim
 function strTrim(val){
     if (typeof val === 'undefined' || val === null){
@@ -330,6 +367,7 @@ $(document).ready(function(){
     
     site_media_slider_init();
     site_menu_init();
+    $('.js-news-list').each(function(){ site_news_load($(this)); });
 
     if (window.location.hash){
         setTimeout(function(){
